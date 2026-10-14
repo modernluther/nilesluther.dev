@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import { orderedProjects } from '../lib/projects';
+const projects = await orderedProjects();
+---
+<Base
+  title="Niles Luther"
+  description="Engineer. Composer. I build production software by directing AI coding agents."
+  ogImage="/og/home.png"
+  canonicalPath="/"
+>
+  <header class="who">
+    <img src="/avatar.jpg" alt="" width="40" height="40" />
+    <div><h1 class="name">Niles Luther</h1><span class="identity">Engineer. Composer.</span></div>
+  </header>
+
+  <main class="sections">
+    <section class="prose">
+      <h2 class="label">About</h2>
+      <p>I build production software by directing AI coding agents: an analytics platform, a self-healing vision daemon, and LLM pipelines in active use.</p>
+      <p>I’m also a composer. From 2023 to 2025 I held the first composer residency at a U.S. museum, at the Brooklyn Museum.</p>
+      <p>Looking for an engineering role in New York. <a href="mailto:niles@nilesluther.com">niles@nilesluther.com</a></p>
+    </section>
+
+    <section>
+      <h2 class="label">Projects</h2>
+      <div class="list">
+        {projects.map((p) => (
+          <a class="row" href={`/${p.id}/`}>
+            <span class="row-title" style={`view-transition-name: t-${p.id}`}>{p.data.title}</span>
+            <span class="row-summary">{p.data.summary}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="prose">
+      <h2 class="label">More</h2>
+      <p>You can find my code on <a href="https://github.com/modernluther">GitHub</a>, my work history on <a href="https://www.linkedin.com/in/niles-luther">LinkedIn</a>, and my music at <a href="https://nilesluther.com">nilesluther.com</a>.</p>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .who { display: flex; gap: 14px; align-items: center; }
+  .who img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+  .who .name { display: block; font-size: 16px; font-weight: 500; line-height: 24px; margin: 0; }
+  .who .identity { display: block; font-weight: 500; color: var(--muted); line-height: 16px; }
+  .sections { margin-top: 64px; display: grid; gap: 128px; }
+  @media (max-width: 640px) { .sections { margin-top: 48px; gap: 64px; } }
+</style>

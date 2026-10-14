@@ -1,0 +1,97 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Chevron from '../components/Chevron.astro';
+import { orderedProjects, nextOf, type Project } from '../lib/projects';
+
+export async function getStaticPaths() {
+  const list = await orderedProjects();
+  return list.map((p, i) => ({ params: { slug: p.id }, props: { project: p, next: nextOf(list, i) } }));
+}
+interface Props { project: Project; next: Project }
+const { project, next } = Astro.props;
+const { Content } = await render(project);
+const d = project.data;
+const words = next.data.title.split(' ');
+const last = words.pop();
+---
+<Base
+  title={`${d.title} · Niles Luther`}
+  description={d.summary}
+  ogImage={`/og/${project.id}.png`}
+  canonicalPath={`/${project.id}/`}
+>
+  <a class="back" href="/"><Chevron dir="left" />Niles Luther</a>
+
+  <main>
+  <header class="head">
+    <h1 class="title" style={`view-transition-name: t-${project.id}`}>{d.title}</h1>
+    <p class="meta">
+      {d.dates}{d.links.map((l) => (<Fragment> ·&nbsp;<a href={l.href}>{l.label}</a></Fragment>))}
+    </p>
+  </header>
+
+  {d.shot && (
+    <figure class="shot">
+      <Image src={d.shot.src} alt={d.shot.alt} widths={[668, 1336]} sizes="(max-width: 700px) 100vw, 668px" />
+      <figcaption>{d.shot.caption}</figcaption>
+    </figure>
+  )}
+
+  <article class="prose body"><Content /></article>
+
+  <section class="results">
+    <h2 class="label">Results</h2>
+    <dl>
+      {d.results.map((r) => (<Fragment><dt>{r.value}</dt><dd>{r.label}</dd></Fragment>))}
+    </dl>
+  </section>
+  </main>
+
+  <nav class="end">
+    <a href={`/${next.id}/`}>
+      <span class="lbl">Next</span><span class="ttl">{words.length > 0 && `${words.join(' ')} `}<span class="nw">{last}<Chevron /></span></span>
+    </a>
+  </nav>
+</Base>
+
+<style>
+  .back { color: var(--muted); display: inline-flex; align-items: center; margin: 0 -8px; padding: 4px 8px; border-radius: 6px; transition: background-color 100ms ease-out, color 100ms ease-out; }
+  .back :global(.chev) { margin: 0 4px 0 -2px; }
+  .back:hover { background: var(--hover); color: var(--fg); }
+  .head { margin-top: 64px; }
+  .title { font-size: 16px; font-weight: 500; }
+  .meta { color: var(--muted); margin-top: 2px; }
+  .shot { margin: 48px -12px 0; }
+  .shot :global(img) { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--rule); }
+  .shot figcaption { color: var(--muted); font-size: 14px; margin-top: 10px; padding: 0 12px; }
+  /* Markdown renders headings and blocks as siblings; each h2 after the first opens a new section 48px down. */
+  .body { margin-top: 64px; }
+  .body :global(h2) { font-size: 16px; font-weight: 500; margin-bottom: 12px; }
+  .body :global(h2:not(:first-child)) { margin-top: 48px; }
+  .body :global(ul) { list-style: none; padding: 0; display: grid; gap: 10px; color: var(--muted); line-height: 26.4px; }
+  .body :global(li) { padding-left: 18px; position: relative; }
+  .body :global(li)::before { content: ""; position: absolute; left: 2px; top: 12px; width: 5px; height: 1px; background: var(--muted); }
+  .results { margin-top: 48px; }
+  .results .label { margin-bottom: 12px; }
+  .results dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 32px; line-height: 26.4px; }
+  .results dt { text-align: right; font-variant-numeric: tabular-nums; }
+  .results dd { color: var(--muted); margin: 0; }
+  .end { margin-top: 96px; }
+  .end a { display: inline-block; margin: -6px -10px; padding: 6px 10px; border-radius: 6px; transition: background-color 100ms ease-out; }
+  .end a:hover { background: var(--hover); }
+  .end .lbl { color: var(--muted); margin-right: 10px; }
+  .end .nw { white-space: nowrap; }
+  .end :global(.chev) { margin-left: 4px; }
+  @media (max-width: 640px) {
+    .results dl { grid-template-columns: 1fr; gap: 0; }
+    .results dt { text-align: left; margin-top: 10px; }
+  }
+  /* Touch: grow each target to 44px; the negative margin keeps the layout where it was. */
+  @media (pointer: coarse) {
+    .back { padding-block: 10px; margin-block: -6px; }
+    .end a { padding-block: 10px; margin-block: -10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .back, .end a { transition: none; } }
+</style>

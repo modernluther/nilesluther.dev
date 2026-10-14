@@ -1,0 +1,23 @@
+name: CI
+on:
+  push: { branches: [dev, main] }
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      PUBLIC_POSTHOG_KEY: ${{ vars.PUBLIC_POSTHOG_KEY }}
+      PUBLIC_POSTHOG_UI_HOST: ${{ vars.PUBLIC_POSTHOG_UI_HOST }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version-file: .nvmrc, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node --test scripts/copy-check.test.mjs
+      - run: npm run build
+      - run: npm run check:copy
+      - run: npm run check:weight
+      - run: npm run check:links
+      - run: npx playwright test

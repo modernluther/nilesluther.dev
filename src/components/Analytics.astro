@@ -1,0 +1,35 @@
+<script>
+  import { readTag, stripTag, stashTag, stashedTag } from '../lib/tag';
+
+  // This part runs before any network: the address bar never shows the tag, valid or not.
+  let tag: string | null = null;
+  try {
+    const url = new URL(location.href);
+    if (url.searchParams.has('r')) history.replaceState(history.state, '', stripTag(url));
+    tag = readTag(url) ?? stashedTag(localStorage);
+    if (tag) stashTag(localStorage, tag);
+  } catch {
+    // Analytics must never break the page.
+  }
+
+  // The library loads only when a key was set at build time, and never blocks the page.
+  const key = import.meta.env.PUBLIC_POSTHOG_KEY;
+  if (key) {
+    import('posthog-js')
+      .then(({ default: posthog }) => {
+        posthog.init(key, {
+          api_host: '/ingest',
+          ui_host: import.meta.env.PUBLIC_POSTHOG_UI_HOST || 'https://us.posthog.com',
+          persistence: 'sessionStorage',
+          capture_pageview: false,
+          capture_pageleave: true,
+          autocapture: true,
+          disable_session_recording: true,
+        });
+        // Register the tag before the first page view so that view carries it.
+        if (tag) posthog.register({ resume_tag: tag });
+        posthog.capture('$pageview');
+      })
+      .catch(() => {});
+  }
+</script>
